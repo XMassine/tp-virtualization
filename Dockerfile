@@ -1,0 +1,26 @@
+# image de départ
+ FROM alpine:3.20
+# chemin de travail
+WORKDIR /src
+# installation des paquets système
+RUN apk add --no-cache nodejs npm
+# ajout utilisateur node et groupe node
+RUN addgroup -S node && adduser -S node -G node
+# added command to give the node user permissions
+RUN chown -R node:node /src
+# downgrade des privilèges
+USER node
+# copie des fichiers du dépôt (package.json d’abord pour le cache)
+COPY --chown=node:node package*.json ./
+
+# installation des dépendances
+RUN npm install --production
+
+# copie du reste du code (src/, etc.)
+COPY --chown=node:node . .
+
+# build (optionnel si tu utilises TypeScript ou un bundler)
+RUN npm run build || echo "no build step"
+
+# exécution de ton app
+CMD ["npm", "run", "watch"]
