@@ -1,6 +1,6 @@
 # I Want Typescript
 
-📜 Template repository for a new Node.js TypeScript project linted using ESLint with Prettier
+📜 Template repository for a new Node.js TypeScript project linted using ESLint with Prettier, test de github actions
 
 ## Usage
 
