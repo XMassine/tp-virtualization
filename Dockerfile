@@ -1,26 +1,27 @@
-# image de départ
- FROM alpine:3.20
-# chemin de travail
-WORKDIR /src
-# installation des paquets système
-RUN apk add --no-cache nodejs npm
-# ajout utilisateur node et groupe node
-RUN addgroup -S node && adduser -S node -G node
-# added command to give the node user permissions
-RUN chown -R node:node /src
-# downgrade des privilèges
-USER node
-# copie des fichiers du dépôt (package.json d’abord pour le cache)
-COPY --chown=node:node package*.json ./
+# === STAGE 1 : BUILD ===
+FROM node:20-alpine AS builder
+WORKDIR /app
 
-# installation des dépendances
+# copie des fichiers de dépendances
+COPY package*.json ./
+RUN npm install
+
+# copie du reste du code source
+COPY . .
+
+# compilation TypeScript -> dist/
+RUN npm run build
+
+
+# === STAGE 2 : RUN ===
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+# copier uniquement les fichiers nécessaires depuis le builder
+COPY --from=builder /app/package*.json ./
 RUN npm install --production
 
-# copie du reste du code (src/, etc.)
-COPY --chown=node:node . .
+COPY --from=builder /app/dist ./dist
 
-# build (optionnel si tu utilises TypeScript ou un bundler)
-RUN npm run build || echo "no build step"
-
-# exécution de ton app
-CMD ["npm", "run", "watch"]
+# exécution (sans npm run watch)
+CMD ["node", "dist/index.js"]
