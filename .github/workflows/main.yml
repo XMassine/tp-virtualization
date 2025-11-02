@@ -3,44 +3,74 @@ name: CI - Build and Push Docker Image
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      docker_tag:
+        description: "Docker image tag"
+        required: false
+        default: "latest"
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/sysinfo-api
+  DOCKER_TAG: ${{ github.event.inputs.docker_tag || github.sha }}
 
 jobs:
-  build:
+  # 1️⃣ Build and test app
+  build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # set up Node
-      - name: Use Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Build and test
       - name: Build app
         run: npm run build
-      # etst
+
       - name: Run unit tests
         run: npm test
 
-      # 5️Log in to Docker Hub
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            dist
+            package*.json
+
+  # 2️⃣ Build and push Docker image
+  docker-build:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build and push image
-      - name: Build and push Docker image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sysinfo-api:${{ github.sha }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+            ${{ env.IMAGE_NAME }}:latest
+
+  # 3️⃣ (Optional) Notify or release
+  release:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print image info
+        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
