@@ -1,6 +1,6 @@
 {
   "name": "i-want-typescript",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "📜 Template repository for a new Node.js TypeScript project linted using ESLint with Prettier",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
