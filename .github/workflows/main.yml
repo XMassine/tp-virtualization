@@ -63,7 +63,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sysinfo-api:0.0.4
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
             ${{ env.IMAGE_NAME }}:latest
@@ -74,4 +73,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Print image info
-        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:0.0.4"
+        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
