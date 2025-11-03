@@ -1,41 +1,33 @@
 name: CI - Build and Push Docker Image
-
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
-    inputs:
-      docker_tag:
-        description: "Docker image tag"
-        required: false
-        default: "latest"
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/sysinfo-api
-  DOCKER_TAG: ${{ github.event.inputs.docker_tag || github.sha }}
 
 jobs:
-  # 1️⃣ Build and test app
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
+      
       - name: Install dependencies
         run: npm ci
-
+      
       - name: Build app
         run: npm run build
-
+      
       - name: Run unit tests
         run: npm test
-
+      
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -44,34 +36,42 @@ jobs:
             dist
             package*.json
 
-  # 2️⃣ Build and push Docker image
   docker-build:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
+      - name: Get version from package.json
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+      
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sysinfo-api:0.0.4
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+            ${{ env.IMAGE_NAME }}:${{ steps.package-version.outputs.version }}
             ${{ env.IMAGE_NAME }}:latest
 
-  # 3️⃣ (Optional) Notify or release
   release:
     needs: docker-build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version from package.json
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
       - name: Print image info
-        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:0.0.4"
+        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:${{ steps.package-version.outputs.version }}"
