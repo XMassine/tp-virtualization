@@ -74,4 +74,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Print image info
-        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+        run: echo "✅ Image pushed as ${{ env.IMAGE_NAME }}:0.0.4"
