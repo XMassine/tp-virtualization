@@ -83,5 +83,5 @@ jobs:
       
       - name: Print deployment info
         run: |
-          echo "✅ Deployed version ${{ steps.package-version.outputs.version }}"
+          echo "Deployed version ${{ steps.package-version.outputs.version }}"
           echo "🌐 URL: https://sys-info.azurewebsites.net"
