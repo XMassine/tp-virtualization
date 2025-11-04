@@ -81,7 +81,3 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           images: ${{ env.IMAGE_NAME }}:${{ steps.package-version.outputs.version }}
       
-      - name: Print deployment info
-        run: |
-          echo "Deployed version ${{ steps.package-version.outputs.version }}"
-          echo "🌐 URL: https://sys-info.azurewebsites.net"
